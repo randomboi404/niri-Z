@@ -19,9 +19,18 @@ jobs:
     steps:
       - uses: actions/checkout@v4
 
-      - name: Update system and install dependencies
+      # --- Set up CachyOS repos ---
+      - name: Add CachyOS repos
         run: |
-          pacman -Sy --noconfirm --needed \
+          echo "[cachyos]" | sudo tee -a /etc/pacman.conf
+          echo "SigLevel = Never" | sudo tee -a /etc/pacman.conf
+          echo "Server = https://mirror.cachyos.org/\$arch" | sudo tee -a /etc/pacman.conf
+          sudo pacman -Sy
+
+      # --- Update system and install dependencies ---
+      - name: Install system dependencies
+        run: |
+          sudo pacman -Sy --noconfirm --needed \
             base-devel \
             git \
             curl \
@@ -43,9 +52,11 @@ jobs:
             ninja \
             cmake
 
+      # --- Set up Rust ---
       - name: Set up Rust
         uses: dtolnay/rust-toolchain@stable
 
+      # --- Cache Cargo dependencies ---
       - name: Cache Cargo dependencies
         uses: actions/cache@v3
         with:
@@ -57,12 +68,15 @@ jobs:
           restore-keys: |
             ${{ runner.os }}-cargo-
 
+      # --- Build release binary ---
       - name: Build release binary
         run: cargo build --release --verbose
 
+      # --- Run tests ---
       - name: Run tests
         run: cargo test --release --verbose
 
+      # --- Upload binary artifact ---
       - name: Upload binary artifact
         uses: actions/upload-artifact@v4
         with:
