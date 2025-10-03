@@ -1,4 +1,4 @@
-name: Rust
+name: Rust (Arch Build)
 
 on:
   push:
@@ -13,31 +13,49 @@ env:
 jobs:
   build:
     runs-on: ubuntu-latest
+    container:
+      image: archlinux:latest  # Run inside Arch container
 
     steps:
       - uses: actions/checkout@v4
 
-      - name: Install system dependencies
+      - name: Update system and install dependencies
         run: |
-          sudo apt-get update -y
-          sudo apt-get install -y \
+          pacman -Sy --noconfirm --needed \
+            base-devel \
+            git \
             curl \
-            gcc \
             clang \
-            pkg-config \
-            libglib2.0-dev \
-            libudev-dev \
-            libgbm-dev \
-            libxkbcommon-dev \
-            libegl1-mesa-dev \
-            libwayland-dev \
-            libinput-dev \
-            libdbus-1-dev \
-            libsystemd-dev \
-            libseat-dev \
-            libpipewire-0.3-dev \
-            libpango1.0-dev \
-            libdisplay-info-dev
+            pkgconf \
+            glib2 \
+            libxkbcommon \
+            libinput \
+            systemd \
+            pipewire \
+            pango \
+            libdisplay-info \
+            libseat \
+            libgbm \
+            mesa \
+            wayland \
+            dbus \
+            libffi \
+            ninja \
+            cmake
+
+      - name: Set up Rust
+        uses: dtolnay/rust-toolchain@stable
+
+      - name: Cache Cargo dependencies
+        uses: actions/cache@v3
+        with:
+          path: |
+            ~/.cargo/registry
+            ~/.cargo/git
+            target
+          key: ${{ runner.os }}-cargo-${{ hashFiles('**/Cargo.lock') }}
+          restore-keys: |
+            ${{ runner.os }}-cargo-
 
       - name: Build release binary
         run: cargo build --release --verbose
