@@ -14,18 +14,10 @@ jobs:
   build:
     runs-on: ubuntu-latest
     container:
-      image: archlinux:latest  # Root inside container
+      image: archlinux:latest  # root by default
 
     steps:
       - uses: actions/checkout@v4
-
-      # --- Add CachyOS repo inside container ---
-      - name: Add CachyOS repo
-        run: |
-          echo "[cachyos]" >> /etc/pacman.conf
-          echo "SigLevel = Never" >> /etc/pacman.conf
-          echo "Server = https://mirror.cachyos.org/\$arch" >> /etc/pacman.conf
-          pacman -Sy --noconfirm
 
       # --- Update system and install dependencies ---
       - name: Install dependencies
@@ -42,15 +34,21 @@ jobs:
             systemd \
             pipewire \
             pango \
-            libdisplay-info \
-            libseat \
-            libgbm \
             mesa \
             wayland \
             dbus \
             libffi \
             ninja \
-            cmake
+            cmake \
+            python  # for building some AUR helpers if needed
+
+      # --- Optional: install AUR helper to get packages not in repo ---
+      # - name: Install paru (AUR helper)
+      #   run: |
+      #     git clone https://aur.archlinux.org/paru.git /tmp/paru
+      #     cd /tmp/paru
+      #     makepkg -si --noconfirm
+      #     cd -
 
       # --- Set up Rust ---
       - name: Set up Rust
