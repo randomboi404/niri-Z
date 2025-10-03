@@ -41,7 +41,8 @@ jobs:
             dbus \
             libffi \
             ninja \
-            cmake
+            cmake \
+            libdisplay-info  # Install libdisplay-info
 
       - name: Start seatd
         run: |
