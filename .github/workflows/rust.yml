@@ -5,6 +5,7 @@ on:
     branches: [ "main" ]
   pull_request:
     branches: [ "main" ]
+  workflow_dispatch:
 
 env:
   CARGO_TERM_COLOR: always
@@ -14,16 +15,38 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
-    - uses: actions/checkout@v4
+      - uses: actions/checkout@v4
 
-    - name: Build (release)
-      run: cargo build --release --verbose
+      - name: Install system dependencies
+        run: |
+          sudo apt-get update -y
+          sudo apt-get install -y \
+            curl \
+            gcc \
+            clang \
+            pkg-config \
+            libglib2.0-dev \
+            libudev-dev \
+            libgbm-dev \
+            libxkbcommon-dev \
+            libegl1-mesa-dev \
+            libwayland-dev \
+            libinput-dev \
+            libdbus-1-dev \
+            libsystemd-dev \
+            libseat-dev \
+            libpipewire-0.3-dev \
+            libpango1.0-dev \
+            libdisplay-info-dev
 
-    - name: Run tests
-      run: cargo test --release --verbose
+      - name: Build release binary
+        run: cargo build --release --verbose
 
-    - name: Upload binary artifact
-      uses: actions/upload-artifact@v4
-      with:
-        name: niri-binary
-        path: target/release/niri
+      - name: Run tests
+        run: cargo test --release --verbose
+
+      - name: Upload binary artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: niri-binary
+          path: target/release/niri
