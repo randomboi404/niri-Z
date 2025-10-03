@@ -9,18 +9,19 @@ on:
 
 env:
   CARGO_TERM_COLOR: always
+  PKG_CONFIG_ALLOW_SYSTEM_LIBS: 1
+  PKG_CONFIG_ALLOW_SYSTEM_CFLAGS: 1
 
 jobs:
   build:
     runs-on: ubuntu-latest
     container:
-      image: archlinux:latest  # root by default
+      image: archlinux:latest  # Run inside Arch container
 
     steps:
       - uses: actions/checkout@v4
 
-      # --- Update system and install dependencies ---
-      - name: Install dependencies
+      - name: Update system and install dependencies
         run: |
           pacman -Sy --noconfirm --needed \
             base-devel \
@@ -34,27 +35,21 @@ jobs:
             systemd \
             pipewire \
             pango \
+            seatd \
             mesa \
             wayland \
             dbus \
             libffi \
             ninja \
-            cmake \
-            python  # for building some AUR helpers if needed
+            cmake
 
-      # --- Optional: install AUR helper to get packages not in repo ---
-      # - name: Install paru (AUR helper)
-      #   run: |
-      #     git clone https://aur.archlinux.org/paru.git /tmp/paru
-      #     cd /tmp/paru
-      #     makepkg -si --noconfirm
-      #     cd -
+      - name: Start seatd
+        run: |
+          seatd &
 
-      # --- Set up Rust ---
       - name: Set up Rust
         uses: dtolnay/rust-toolchain@stable
 
-      # --- Cache Cargo dependencies ---
       - name: Cache Cargo dependencies
         uses: actions/cache@v3
         with:
@@ -66,15 +61,12 @@ jobs:
           restore-keys: |
             ${{ runner.os }}-cargo-
 
-      # --- Build release binary ---
       - name: Build release binary
         run: cargo build --release --verbose
 
-      # --- Run tests ---
       - name: Run tests
         run: cargo test --release --verbose
 
-      # --- Upload binary artifact ---
       - name: Upload binary artifact
         uses: actions/upload-artifact@v4
         with:
